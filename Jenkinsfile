@@ -1,115 +1,159 @@
 pipeline {
-    agent { label 'Jenkins-Agent' }
-    tools {
-        jdk 'Java17'
-        maven 'Maven3'
+	agent {							
+        label "buildAgent"	
     }
-    environment {
-	    APP_NAME = "register-app-pipeline"
-            RELEASE = "1.0.0"
-            DOCKER_USER = "ashfaque9x"
-            DOCKER_PASS = 'dockerhub'
-            IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
-            IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
-	    JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
-    }
-    stages{
-        stage("Cleanup Workspace"){
-                steps {
-                cleanWs()
-                }
-        }
+	
+	tools {
+		maven 'maven3'			
+	}
+	
+	stages {
+		stage ('Clean Workspace'){
+			steps {
+                echo "****** Workspace Cleanup running....******"
+				cleanWs()
+			}
+		}
+	
+		stage ('Git Checkout'){
+			steps {
+                echo "****** Git Checkout running....******"
+				git branch: 'dev', credentialsId: 'git-cred', url: 'https://github.com/mokadir/mkadirbank.git'
+			}
+		}
+		
+		stage ('Compile'){
+			steps {
+                echo "****** Compile running....******"
+				sh "mvn compile"
+			}
+		}
+		
+		stage ('Build Application'){
+			steps {
+                echo "****** Build Application running....******"
+				sh "mvn clean package -DskipTests=true"
+			}
+		}
+		
+ 		stage('Code Coverage ') {
+			steps {
+				echo "****** Code Coverage running....******"
+				echo "Running Code Coverage ..."
+				sh "mvn jacoco:report"
+			} 
+		}
+				
+    	stage ('Unit Test'){
+			steps {
+				echo "****** Unit Test running....******"
+				sh "mvn test -DskipTests=true" 
+			}
+		} 
 
-        stage("Checkout from SCM"){
-                steps {
-                    git branch: 'main', credentialsId: 'github', url: 'https://github.com/Ashfaque-9x/register-app'
-                }
-        }
+		
+ 		stage ('File System Scan'){
+			steps {
+				echo "****** File System scan running....******"
+				sh "trivy fs --format table -o trivyscanfs.html ."
+			}
+		} 
+/*		
+ 		stage('SAST') {
+			steps { 
+				echo "Running Static application security testing using SonarQube Scanner ..."
+				withSonarQubeEnv('mysonarqube') {
+					sh 'mvn sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html'
+				}
+			}
+    	}
+ 		
+		stage('QualityGates') { #need sonarqube webhook
+			steps { 
+				echo "Running Quality Gates to verify the code quality"
+				script {
+				  timeout(time: 1, unit: 'MINUTES') {
+					def qg = waitForQualityGate()		# jenkins will get serv & cred from previous stage
+					if (qg.status != 'OK') {
+					  error "Pipeline aborted due to quality gate failure: ${qg.status}"
+					}
+				  }
+				}
+			}
+		}
+		
+		stage ('Building and Publish Nexus'){
+			steps {
+				withMaven(globalMavenSettingsConfig: 'maven-settings-mkadir', jdk: '', maven: 'maven3', mavenSettingsConfig: '', traceability: true){
+					sh "mvn deploy -DskipTests=true"
+				}
+			}
+		} 
+ */
+		
+		stage ('Docker Build & Tag'){
+			steps {
+				script {
+                    echo "****** Docker Build and Tag Image running....******"
+					withDockerRegistry(credentialsId: 'docer-cred') {
+						sh "docker build -t mskr7/mkadir-bankapp:latest ."
+					}
+				}
+			}
+		}
 
-        stage("Build Application"){
-            steps {
-                sh "mvn clean package"
-            }
+/* 		stage('Build Docker Image') { 			# alternate. better using functions insted of commands
+			steps { 
+				echo "Build Docker Image"
+				script {
+					   docker.withRegistry( '', registryCredential ) { 
+					        myImage = docker.build registry + ":$BUILD_NUMBER" 
+						    myImage.push()
+						}	
+				}
+			}
+		
 
-       }
+     environment {  #environment variables for previous docker alternate stage
+		registry = "mskr7/mkadir-bankapp" 
+		registryCredential = 'docdocker-cred' 
+	} 
 
-       stage("Test Application"){
-           steps {
-                 sh "mvn test"
-           }
-       }
-
-       stage("SonarQube Analysis"){
-           steps {
-	           script {
-		        withSonarQubeEnv(credentialsId: 'jenkins-sonarqube-token') { 
-                        sh "mvn sonar:sonar"
-		        }
-	           }	
-           }
-       }
-
-       stage("Quality Gate"){
-           steps {
-               script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonarqube-token'
-                }	
-            }
-
-        }
-
-        stage("Build & Push Docker Image") {
-            steps {
-                script {
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image = docker.build "${IMAGE_NAME}"
-                    }
-
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image.push("${IMAGE_TAG}")
-                        docker_image.push('latest')
-                    }
-                }
-            }
-
-       }
-
-       stage("Trivy Scan") {
-           steps {
-               script {
-	            sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image ashfaque9x/register-app-pipeline:latest --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
-               }
-           }
-       }
-
-       stage ('Cleanup Artifacts') {
-           steps {
-               script {
-                    sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG}"
-                    sh "docker rmi ${IMAGE_NAME}:latest"
-               }
-          }
-       }
-
-       stage("Trigger CD Pipeline") {
-            steps {
-                script {
-                    sh "curl -v -k --user clouduser:${JENKINS_API_TOKEN} -X POST -H 'cache-control: no-cache' -H 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${IMAGE_TAG}' 'ec2-13-232-128-192.ap-south-1.compute.amazonaws.com:8080/job/gitops-register-app-cd/buildWithParameters?token=gitops-token'"
-                }
-            }
-       }
-    }
-
-    post {
-       failure {
-             emailext body: '''${SCRIPT, template="groovy-html.template"}''', 
-                      subject: "${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - Failed", 
-                      mimeType: 'text/html',to: "ashfaque.s510@gmail.com"
-      }
-      success {
-            emailext body: '''${SCRIPT, template="groovy-html.template"}''', 
-                     subject: "${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - Successful", 
-                     mimeType: 'text/html',to: "ashfaque.s510@gmail.com"
-      }      
-   }
+		
+		stage ('Docker Image Scan'){ 			
+			steps {
+                echo "****** Docker Image Scan by Trivy running....******"
+				sh "trivy image --scanners vuln --format table -o trivyscandocr.html mskr7/mkadir-bankapp:latest"
+			}
+		}  need lot of ram
+*/		
+		stage ('Docker Push'){
+			steps {
+				script {
+                    echo "****** Docker Push Image running....******"
+					withDockerRegistry(credentialsId: 'docer-cred') {
+						sh "docker push mskr7/mkadir-bankapp:latest"
+					}
+				}
+			}
+		}
+		
+ 		stage('Smoke Test') {
+			steps { 
+				echo "****** Smoke Test Image running....******"
+				sh "docker run -d --name smokerun -p 8080:8080 mskr7/mkadir-bankapp:latest"
+				sh "sleep 90"
+				sh "docker rm --force smokerun"
+			}
+		} 
+		
+		stage('Trigger Deployment'){
+			steps { 
+			   script {
+                    echo "****** Deployment running.... ******"
+					echo "Next: Trigger CD Pipeline ......" 
+				}		
+			}
+		}
+    }		
 }
