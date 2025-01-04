@@ -1,6 +1,6 @@
 pipeline {
 	agent {							
-        label "buildAgent"	
+        label "buildAgent2"	
     }
 	
 	tools {
