@@ -3,13 +3,10 @@ RUN cp -R  /usr/local/tomcat/webapps.dist/*  /usr/local/tomcat/webapps
 COPY webapp/target/*.war /usr/local/tomcat/webapps
 
 COPY context.xml /usr/local/tomcat/webapps/host-manager/META-INF/
-RUN chown -R tomcat:tomcat /usr/local/tomcat/webapps/host-manager/META-INF/context.xml
 RUN chmod 640 /usr/local/tomcat/webapps/host-manager/META-INF/context.xml
 
 COPY context.xml /usr/local/tomcat/webapps/manager/META-INF/
-RUN chown -R tomcat:tomcat /usr/local/tomcat/webapps/manager/META-INF/context.xml
 RUN chmod 640 /usr/local/tomcat/webapps/manager/META-INF/context.xml
 
 COPY tomcat-users.xml /usr/local/tomcat/conf/
-RUN chown -R tomcat:tomcat /usr/local/tomcat/conf/tomcat-users.xml
 RUN chmod 600 /usr/local/tomcat/conf/tomcat-users.xml
