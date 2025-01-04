@@ -18,7 +18,7 @@ pipeline {
 		stage ('Git Checkout'){
 			steps {
                 echo "****** Git Checkout running....******"
-				git branch: 'dev', credentialsId: 'git-cred', url: 'https://github.com/mokadir/mkadirbank.git'
+				git branch: 'dev', credentialsId: 'git-cred', url: 'https://github.com/mokadir/mkadir-registerapp.git'
 			}
 		}
 		
@@ -36,7 +36,7 @@ pipeline {
 			}
 		}
 		
- 		stage('Code Coverage ') {
+/*  		stage('Code Coverage ') {
 			steps {
 				echo "****** Code Coverage running....******"
 				echo "Running Code Coverage ..."
@@ -57,7 +57,7 @@ pipeline {
 				echo "****** File System scan running....******"
 				sh "trivy fs --format table -o trivyscanfs.html ."
 			}
-		} 
+		}  */
 /*		
  		stage('SAST') {
 			steps { 
@@ -96,7 +96,7 @@ pipeline {
 				script {
                     echo "****** Docker Build and Tag Image running....******"
 					withDockerRegistry(credentialsId: 'docer-cred') {
-						sh "docker build -t mskr7/mkadir-bankapp:latest ."
+						sh "docker build -t mskr7/mkadir-registerapp:latest ."
 					}
 				}
 			}
@@ -132,20 +132,20 @@ pipeline {
 				script {
                     echo "****** Docker Push Image running....******"
 					withDockerRegistry(credentialsId: 'docer-cred') {
-						sh "docker push mskr7/mkadir-bankapp:latest"
+						sh "docker push mskr7/mkadir-registerapp:latest"
 					}
 				}
 			}
 		}
 		
- 		stage('Smoke Test') {
+/*  		stage('Smoke Test') {
 			steps { 
 				echo "****** Smoke Test Image running....******"
-				sh "docker run -d --name smokerun -p 8080:8080 mskr7/mkadir-bankapp:latest"
+				sh "docker run -d --name smokerun -p 8080:8080 mskr7/mkadir-registerapp:latest"
 				sh "sleep 90"
 				sh "docker rm --force smokerun"
 			}
-		} 
+		}  */
 		
 		stage('Trigger Deployment'){
 			steps { 
