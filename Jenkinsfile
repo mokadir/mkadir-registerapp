@@ -91,7 +91,7 @@ pipeline {
 		} 
  */
 		
-		stage ('Docker Build & Tag'){
+/* 		stage ('Docker Build & Tag'){
 			steps {
 				script {
                     echo "****** Docker Build and Tag Image running....******"
@@ -100,7 +100,7 @@ pipeline {
 					}
 				}
 			}
-		}
+		} */
 
 /* 		stage('Build Docker Image') { 			# alternate. better using functions insted of commands
 			steps { 
@@ -127,7 +127,7 @@ pipeline {
 			}
 		}  need lot of ram
 */		
-		stage ('Docker Push'){
+/* 		stage ('Docker Push'){
 			steps {
 				script {
                     echo "****** Docker Push Image running....******"
@@ -136,7 +136,7 @@ pipeline {
 					}
 				}
 			}
-		}
+		} */
 		
 /*  		stage('Smoke Test') {
 			steps { 
@@ -147,13 +147,15 @@ pipeline {
 			}
 		}  */
 		
-		stage('Trigger Deployment'){
+		stage('Deployment to Webserver/Dockerhost through Ansible Server/Controller') {
 			steps { 
 			   script {
                     echo "****** Deployment running.... ******"
-					echo "Next: Trigger CD Pipeline ......" 
+					 sshPublisher(publishers: [sshPublisherDesc(configName: 'ansible-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'ansible-playbook /home/ansadmin/build-deploy-webserver-1-tomcat.yml --limit= webserver-1-tomcat', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '//home/ansadmin', remoteDirectorySDF: false, removePrefix: 'webapp/target', sourceFiles: 'webapp/target/*.war')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
 				}		
 			}
 		}
+
+		
     }		
 }
