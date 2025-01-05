@@ -56,41 +56,11 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
-        
-          <reportPlugins>
-            <plugin>
-              <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-              <artifactId>maven-jxr-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-              <artifactId>maven-javadoc-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-              <artifactId>maven-pmd-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-              <artifactId>maven-surefire-report-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>findbugs-maven-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>taglist-maven-plugin</artifactId>
-            </plugin>
-          </reportPlugins>
-    
+        <version>3.12.0</version>
       </plugin>
+
     </plugins>
 
     <pluginManagement>
@@ -225,5 +195,40 @@
   <prerequisites>
     <maven>3.0.3</maven>
   </prerequisites>
+
+<reporting>
+  <plugins>
+    <plugin>
+      <artifactId>maven-checkstyle-plugin</artifactId>
+    </plugin>
+
+    <plugin>
+      <artifactId>maven-jxr-plugin</artifactId>
+    </plugin>
+
+    <plugin>
+      <artifactId>maven-javadoc-plugin</artifactId>
+    </plugin>
+
+    <plugin>
+      <artifactId>maven-pmd-plugin</artifactId>
+    </plugin>
+
+    <plugin>
+      <artifactId>maven-surefire-report-plugin</artifactId>
+    </plugin>
+
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>findbugs-maven-plugin</artifactId>
+    </plugin>
+
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>taglist-maven-plugin</artifactId>
+    </plugin> 
+    
+  </plugins>
+</reporting>
 
 </project>
