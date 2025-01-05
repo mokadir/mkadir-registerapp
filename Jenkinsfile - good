@@ -1,0 +1,118 @@
+pipeline {
+	agent {							
+        label "buildAgent2"	
+    }
+	
+	tools {
+		maven 'maven3'			
+	}
+	
+	stages {
+		stage ('Clean Workspace'){
+			steps {
+                echo "****** Workspace Cleanup running....******"
+				cleanWs()
+			}
+		}
+	
+		stage ('Git Checkout'){
+			steps {
+                echo "****** Git Checkout running....******"
+				git branch: 'dev', credentialsId: 'git-cred', url: 'https://github.com/mokadir/mkadir-registerapp.git'
+			}
+		}
+		
+		stage ('Compile'){
+			steps {
+                echo "****** Compile running....******"
+				sh "mvn compile"
+			}
+		}
+		
+		stage ('Build Application'){
+			steps {
+                echo "****** Build Application running....******"
+				sh "mvn clean package -DskipTests=true"
+			}
+		}
+		
+ 		stage('Code Coverage ') {
+			steps {
+				echo "****** Code Coverage running....******"
+				echo "Running Code Coverage ..."
+				sh "mvn jacoco:report"
+			} 
+		}
+				
+    	stage ('Unit Test'){
+			steps {
+				echo "****** Unit Test running....******"
+				sh "mvn test -DskipTests=true" 
+			}
+		} 
+
+		
+ 		stage ('File System Scan'){
+			steps {
+				echo "****** File System scan running....******"
+				sh "trivy fs --format table -o trivyscanfs.html ."
+			}
+		} 
+
+		stage ('Docker Build & Tag'){
+			steps {
+				script {
+                    echo "****** Docker Build and Tag Image running....******"
+					withDockerRegistry(credentialsId: 'docer-cred') {
+						sh "docker build -t mskr7/mkadir-registerapp:latest ."
+					}
+				}
+			}
+		}
+	
+		stage ('Docker Image Scan'){ 			
+			steps {
+                echo "****** Docker Image Scan by Trivy running....******"
+				sh "trivy image --scanners vuln --format table -o trivyscandocr.html mskr7/mkadir-bankapp:latest"
+			}
+		}  need lot of ram
+		
+		stage ('Docker Push'){
+			steps {
+				script {
+                    echo "****** Docker Push Image running....******"
+					withDockerRegistry(credentialsId: 'docer-cred') {
+						sh "docker push mskr7/mkadir-registerapp:latest"
+					}
+				}
+			}
+		}
+		
+ 		stage('Smoke Test') {
+			steps { 
+				echo "****** Smoke Test Image running....******"
+				sh "docker run -d --name smokerun -p 8080:8080 mskr7/mkadir-registerapp:latest"
+				sh "sleep 90"
+				sh "docker rm --force smokerun"
+			}
+		} 
+		
+/* 		stage('Deployment to Webserver-1-Tomcat through Ansible Server/Controller') {
+			steps { 
+			   script {
+                    echo "****** Deployment Webserver-1-Tomcat running.... ******"
+					 sshPublisher(publishers: [sshPublisherDesc(configName: 'ansible-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'ansible-playbook /home/ansadmin/build-deploy-webserver-1-tomcat.yml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '//home/ansadmin', remoteDirectorySDF: false, removePrefix: 'webapp/target', sourceFiles: 'webapp/target/*.war')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+				}		
+			}
+		} */
+
+		stage('Deployment to Webserver-2-Dockerhost through Ansible Server/Controller') {
+			steps { 
+			   script {
+                    echo "****** Deployment Webserver-2-Dockerhost running.... ******"
+					sshPublisher(publishers: [sshPublisherDesc(configName: 'ansible-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'ansible-playbook /home/ansadmin/build-deploy-webserver-2-dockerhost.yml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)]) 
+				}		
+			}
+		}
+    }		
+}
