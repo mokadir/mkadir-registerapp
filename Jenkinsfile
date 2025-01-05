@@ -36,7 +36,7 @@ pipeline {
 			}
 		}
 		
-/*  		stage('Code Coverage ') {
+ 		stage('Code Coverage ') {
 			steps {
 				echo "****** Code Coverage running....******"
 				echo "Running Code Coverage ..."
@@ -57,9 +57,9 @@ pipeline {
 				echo "****** File System scan running....******"
 				sh "trivy fs --format table -o trivyscanfs.html ."
 			}
-		}  */
-/*		
- 		stage('SAST') {
+		} 
+		
+ 		/* stage('SAST') {
 			steps { 
 				echo "Running Static application security testing using SonarQube Scanner ..."
 				withSonarQubeEnv('mysonarqube') {
@@ -88,8 +88,8 @@ pipeline {
 					sh "mvn deploy -DskipTests=true"
 				}
 			}
-		} 
- */
+		}  */
+
 		
 		stage ('Docker Build & Tag'){
 			steps {
@@ -113,20 +113,20 @@ pipeline {
 				}
 			}
 		
+	/* environment variables for previous docker alternate stage 
+		environment {  
+			registry = "mskr7/mkadir-bankapp" 
+			registryCredential = 'docdocker-cred' 
+		}  */
 
-     environment {  #environment variables for previous docker alternate stage
-		registry = "mskr7/mkadir-bankapp" 
-		registryCredential = 'docdocker-cred' 
-	} 
-
-		
-		stage ('Docker Image Scan'){ 			
+	/* Need lots of RAM */
+/* 		stage ('Docker Image Scan'){ 			
 			steps {
                 echo "****** Docker Image Scan by Trivy running....******"
-				sh "trivy image --scanners vuln --format table -o trivyscandocr.html mskr7/mkadir-bankapp:latest"
+				sh "trivy image --scanners vuln --format table -o trivyscandocr.html mskr7/mkadir-registerapp:latest"
 			}
-		}  need lot of ram
-*/		
+		} */
+
 		stage ('Docker Push'){
 			steps {
 				script {
@@ -138,7 +138,7 @@ pipeline {
 			}
 		}
 		
-/*  		stage('Smoke Test') {
+/*  	stage('Smoke Test') {
 			steps { 
 				echo "****** Smoke Test Image running....******"
 				sh "docker run -d --name smokerun -p 8080:8080 mskr7/mkadir-registerapp:latest"
@@ -156,13 +156,22 @@ pipeline {
 			}
 		} */
 
-		stage('Deployment to Webserver-2-Dockerhost through Ansible Server/Controller') {
+/* 		stage('Deployment to Webserver-2-Dockerhost through Ansible Server/Controller') {
 			steps { 
 			   script {
                     echo "****** Deployment Webserver-2-Dockerhost running.... ******"
 					sshPublisher(publishers: [sshPublisherDesc(configName: 'ansible-server', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'ansible-playbook /home/ansadmin/build-deploy-webserver-2-dockerhost.yml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)]) 
 				}		
 			}
+		} */
+
+		stage('Deployment Next') {
+			steps { 
+			   script {
+                    echo "****** Deployment next ******"
+				}		
+			}
 		}
+
     }		
 }
