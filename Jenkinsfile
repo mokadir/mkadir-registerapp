@@ -68,6 +68,7 @@ pipeline {
 			}
 		} */ 
 		
+		/* configure sonar qube server */
  		stage('SAST-SonarQube Scanner') {
 			steps { 
 				echo "****** Static application security testing (SAST) using SonarQube Scanner Running....******"
@@ -91,7 +92,7 @@ pipeline {
 			}
 		}
 		
-		/* use managed file */
+		/* configure nexus server and use managed file */
 		stage ('Building and Publish Nexus'){
 			steps {
 				echo "****** Building and Publish Nexus Running....******"
@@ -112,7 +113,7 @@ pipeline {
 			}
 		}
  */
-		/* alternate. better using functions insted of commands */
+		
 		stage("Build & Push Docker Image") {
             steps {
                 script {
@@ -128,8 +129,6 @@ pipeline {
             }
         }
 	  
-		
-
 	/* Need lots of RAM */
  /* 		stage ('Docker Image Scan'){ 			
 			steps {
@@ -186,6 +185,7 @@ pipeline {
 
     }
 
+	/* need to check syntax */
 	post {
 		always {
 			script {
