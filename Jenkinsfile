@@ -152,7 +152,7 @@ pipeline {
 /*  	stage('Smoke Test') {
 			steps { 
 				echo "****** Smoke Test Image running....******"
-				sh "docker run -d --name smokerun -p 8080:8080 mskr7/mkadir-registerapp:latest"
+				sh "docker run -d --name smokerun -p 8080:8080 ${IMAGE_NAME}:${IMAGE_TAG}"
 				sh "sleep 90"
 				sh "docker rm --force smokerun"
 			}
