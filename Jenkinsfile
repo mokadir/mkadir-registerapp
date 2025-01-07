@@ -209,14 +209,14 @@ pipeline {
 					</html>
 				"""
 				
-				emailext (
-					subject: "${jobName} - Build ${build Number} - ${pipelineStatus.toUpperCase()}",
-					body: body,
-					to: jaiswaladi246@gmail.com",
-					from: jenkins@example.com", 
-					replyTo: jenkins@example.com', 
-					mimeType: text/html',
-				)
+				emailext
+					subject: '${jobName} - Build ${build Number} - ${pipelineStatus.toUpperCase()}',
+					body: 'body',
+					to: 'mskadir7@gmail.com',
+					from: 'mskadir7@gmail.com', 
+					replyTo: 'mskadir7@gmail.com', 
+					mimeType: 'text/html'
+				
 			}
 		}
 	}		
